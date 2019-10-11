@@ -14,7 +14,7 @@ WidgetRenderer::WidgetRenderer()
 {
 }
 
-WidgetRenderer *WidgetRenderer::the()
+WidgetRenderer* WidgetRenderer::the()
 {
     if (!m_instance)
     {
@@ -23,13 +23,14 @@ WidgetRenderer *WidgetRenderer::the()
     return m_instance; // FIXME: this is super janky
 }
 
-void WidgetRenderer::submit(Widget *w, const sf::Color& color)
+void WidgetRenderer::submit(Widget* w, const sf::Color& color)
 {
-    if (!w) return;
+    if (!w)
+        return;
     m_widget_vertices.push_back(w);
 }
 
-void WidgetRenderer::draw(sf::RenderWindow &window)
+void WidgetRenderer::draw(sf::RenderWindow& window)
 {
     for (const auto& widget : m_widget_vertices)
     {
