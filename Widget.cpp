@@ -1,4 +1,5 @@
 #include "Widget.h"
+#include "WidgetConstraintsAbsolute.h"
 #include <iostream>
 
 bool Widget::aabb_collision(const glm::vec2& point)
@@ -7,9 +8,10 @@ bool Widget::aabb_collision(const glm::vec2& point)
            point.y > m_position.y && point.y < m_position.y + m_size.y;
 }
 
-Widget::Widget(Widget* parent, const vec2& position, const vec2& size,
+Widget::Widget(Widget* parent, WidgetConstraints* constraints,
                const sf::Color& color)
-    : m_parent(parent), m_position(position), m_size(size) // std::move?
+    : m_parent(parent), m_constraints(constraints),
+      m_position(m_constraints->absolute_position()), m_size(m_constraints->absolute_size()), m_color(color)
 {
     if (parent)
     {
@@ -21,12 +23,27 @@ Widget::Widget(Widget* parent, const vec2& position, const vec2& size,
         m_layer = 0;
     }
     m_varray = sf::VertexArray(sf::Quads, 4);
-    m_varray[0] = sf::Vertex({ m_position.x, m_position.y }, color);
-    m_varray[1] = sf::Vertex({ m_position.x + m_size.x, m_position.y }, color);
-    m_varray[2] = sf::Vertex({ m_position.x + m_size.x, m_position.y + m_size.y }, color);
-    m_varray[3] = sf::Vertex({ m_position.x, m_position.y + m_size.y }, color);
+    m_varray[0] = sf::Vertex({ m_position.x, m_position.y }, m_color);
+    m_varray[1] = sf::Vertex({ m_position.x + m_size.x, m_position.y }, m_color);
+    m_varray[2] = sf::Vertex({ m_position.x + m_size.x, m_position.y + m_size.y }, m_color);
+    m_varray[3] = sf::Vertex({ m_position.x, m_position.y + m_size.y }, m_color);
     WidgetRenderer::the()->submit(this);
 }
+
+
+void Widget::on_update() {}
+
+void Widget::on_resize(float, float) {}
+
+bool Widget::on_click(float, float)
+{
+    std::cout << "Widget received click event!" << std::endl;
+    return true;
+}
+
+bool Widget::operator<(const Widget& rhs) { return m_layer < rhs.m_layer; }
+
+bool Widget::operator>(const Widget& rhs) { return m_layer > rhs.m_layer; }
 
 bool Widget::fire_click_event(float x, float y)
 {
@@ -48,22 +65,37 @@ bool Widget::fire_click_event(float x, float y)
     return false;
 }
 
-bool Widget::operator<(const Widget& rhs) { return m_layer < rhs.m_layer; }
-
-bool Widget::operator>(const Widget& rhs) { return m_layer > rhs.m_layer; }
-
 void Widget::fire_update_event()
 {
-    // std::cout << this << " - on_update" << std::endl;
     for (Widget* w : m_children)
     {
         w->on_update();
     }
 }
 
+void Widget::fire_resize_event(float x, float y, float w, float h)
+{
+    m_constraints->resize(x, y, w, h);
+    m_position = m_constraints->absolute_position();
+    m_size = m_constraints->absolute_size();
+
+    m_varray[0] = sf::Vertex({ m_position.x, m_position.y }, m_color);
+    m_varray[1] = sf::Vertex({ m_position.x + m_size.x, m_position.y }, m_color);
+    m_varray[2] = sf::Vertex({ m_position.x + m_size.x, m_position.y + m_size.y }, m_color);
+    m_varray[3] = sf::Vertex({ m_position.x, m_position.y + m_size.y }, m_color);
+    WidgetRenderer::the()->submit(this);
+    
+    for (Widget* widget : m_children)
+    {
+        widget->fire_resize_event(x, y, w, h);
+    }
+    on_resize(w, h);
+}
+
 void Widget::register_child(Widget* c)
 {
     m_children.push_back(c);
+
     std::sort(m_children.begin(), m_children.end(), [](Widget* first, Widget* second) {
         // Sorting backwards to support proper propagation handling
         return first->layer() > second->layer();

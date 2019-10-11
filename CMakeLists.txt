@@ -4,6 +4,8 @@ add_executable(dg2 main.cpp
     Widget.h Widget.cpp
     WidgetRenderer.h WidgetRenderer.cpp
     ButtonWidget.h ButtonWidget.cpp
+    WidgetConstraints.h WidgetConstraints.cpp
+    WidgetConstraintsAbsolute.h WidgetConstraintsAbsolute.cpp
     # add files here
 )
 

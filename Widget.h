@@ -1,6 +1,7 @@
 #ifndef WIDGET_H
 #define WIDGET_H
 
+#include "WidgetConstraints.h"
 #include "WidgetRenderer.h"
 #include <functional>
 #include <glm/glm.hpp>
@@ -10,38 +11,27 @@
 
 using glm::vec2;
 
-/*
-class WidgetConstraints
-{
-public:
-    WidgetConstraints(const vec2& position, const vec2& size, WidgetConstraints* reference = nullptr);
-};
-*/
-
 class Widget
 {
 public:
-    Widget(Widget* parent, const vec2& position, const vec2& size,
-           const sf::Color& color);
+    Widget(Widget* parent, WidgetConstraints* constraints, const sf::Color& color);
     virtual ~Widget() {}
 
     inline const Widget* parent() { return m_parent; }
 
-    virtual void fire_update_event() final;
-    virtual bool fire_click_event(float x, float y) final;
 
     // accessors
-    inline vec2& position() { return m_position; }
-    inline vec2& size() { return m_size; }
-    inline unsigned& layer() { return m_layer; }
+    inline vec2 position() const { return m_position; }
+    inline vec2 size() const { return m_size; }
+    inline std::uint64_t& layer() { return m_layer; }
+    inline WidgetConstraints* constraints() { return m_constraints.get(); }
 
     // virtual accessors
     inline virtual sf::Drawable& drawable() { return m_varray; }
 
     // const accessors
-    inline const vec2& position() const { return m_position; }
-    inline const vec2& size() const { return m_size; }
-    inline unsigned layer() const { return m_layer; }
+    inline std::uint64_t layer() const { return m_layer; }
+    inline const WidgetConstraints* constraints() const { return m_constraints.get(); }
 
     // virtual const accessors
     inline virtual const sf::Drawable& drawable() const { return m_varray; }
@@ -49,22 +39,23 @@ public:
     bool operator<(const Widget& rhs);
     bool operator>(const Widget& rhs);
 
+    virtual void fire_update_event() final;
+    virtual void fire_resize_event(float, float, float, float) final;
+    virtual bool fire_click_event(float, float) final;
 protected:
-    virtual inline void on_update() {}
-    // bool since it can stop propagation
-    virtual inline bool on_click(float x, float y)
-    {
-        std::cout << "Widget received click event!" << std::endl;
-        return true;
-    }
-
-    vec2 m_size;
-    vec2 m_position;
-    unsigned m_layer;
+    virtual void on_update();
+    virtual void on_resize(float, float);
+    virtual bool on_click(float, float);
 
     Widget* m_parent;
-    std::vector<Widget*> m_children;
+    std::unique_ptr<WidgetConstraints> m_constraints;
+    vec2 m_position;
+    vec2 m_size;
     sf::VertexArray m_varray;
+    std::uint64_t m_layer;
+    sf::Color m_color;
+    std::vector<Widget*> m_children;
+
     bool aabb_collision(const glm::vec2& point);
 
 private:

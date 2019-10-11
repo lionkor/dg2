@@ -27,6 +27,11 @@ void WidgetRenderer::submit(Widget* w)
 {
     if (!w)
         return;
+    auto it = std::find(m_widget_vertices.begin(), m_widget_vertices.end(), w);
+    if (it != m_widget_vertices.end())
+    {
+        m_widget_vertices.erase(it);
+    }
     m_widget_vertices.push_back(w);
 }
 

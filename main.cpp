@@ -1,5 +1,7 @@
 #include "ButtonWidget.h"
 #include "Widget.h"
+#include "WidgetConstraints.h"
+#include "WidgetConstraintsAbsolute.h"
 #include "WidgetRenderer.h"
 #include <SFML/Graphics.hpp>
 #include <glm/glm.hpp>
@@ -13,6 +15,20 @@ int main()
     sf::RenderWindow* window = new sf::RenderWindow(sf::VideoMode(640, 480), "dg2");
     sf::Event event;
 
+    Widget super(nullptr,
+                 new WidgetConstraintsAbsolute(
+                     { 0, 0 }, { window->getSize().x, window->getSize().y }),
+                 sf::Color::White);
+
+    Widget widget_left(&super, new WidgetConstraints({ 0.01, 0.01 }, { 0.1, 0.98 }, &super),
+                       sf::Color::Blue);
+    Widget widget_right(&super, new WidgetConstraints({ .89, 0.01 }, { 0.1, 0.98 }, &super),
+                        sf::Color::Green);
+    Widget left_cool(&widget_left, new WidgetConstraints({.08, .01}, {1. - 2.*.08, .5 - 2.*.01 }, &widget_left), sf::Color::Cyan);
+    Widget weird_button(&widget_left, new WidgetConstraints({ 0., 1.01 }, { .49, .1 }, &left_cool), sf::Color::Red);
+    Widget weird_button2(&widget_left, new WidgetConstraints({ .51, 1.01 }, { .49, .1 }, &left_cool), sf::Color::Red);
+
+    /*
     Widget super(nullptr, { 0, 0 }, { 640, 480 }, sf::Color::Green);
 
     Widget main_widget(&super, { 0, 0 }, { 300, 300 }, sf::Color::White);
@@ -20,12 +36,14 @@ int main()
 
     Widget second_widget(&super, { 300, 0 }, { 300, 300 }, sf::Color::Blue);
     ButtonWidget my_button2(&second_widget, { 280, 50 }, { 200, 100 });
+    */
 
-    // FIXME: Percentage & absolute size constraint system. Should be based on super widget.
-    
+    // FIXME: Percentage & absolute size constraint system. Should be based on super
+    // widget.
+
     while (window->isOpen())
     {
-        main_widget.fire_update_event();
+        super.fire_update_event();
 
         window->clear();
         WidgetRenderer::the()->draw(*window);
@@ -55,6 +73,8 @@ int main()
                     auto view = window->getView();
                     view.setSize(event.size.width, event.size.height);
                     window->setView(view);
+                    auto pos = window->mapPixelToCoords({0, 0});
+                    super.fire_resize_event(pos.x, pos.y, window->getSize().x, window->getSize().y);
                 }
                 break;
             }

@@ -7,14 +7,11 @@
 #include <glm/glm.hpp>
 #include <iostream>
 
-using glm::vec;
 using glm::vec2;
 
 class ButtonWidget : public Widget
 {
 public:
-    ButtonWidget(Widget* parent, const vec2& pos, const vec2& size);
-
     // Widget interface
 protected:
     bool on_click(float x, float y);
