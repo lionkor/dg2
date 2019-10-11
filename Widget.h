@@ -10,17 +10,25 @@
 
 using glm::vec2;
 
+/*
+class WidgetConstraints
+{
+public:
+    WidgetConstraints(const vec2& position, const vec2& size, WidgetConstraints* reference = nullptr);
+};
+*/
+
 class Widget
 {
 public:
     Widget(Widget* parent, const vec2& position, const vec2& size,
            const sf::Color& color);
-    virtual ~Widget() {};
+    virtual ~Widget() {}
 
     inline const Widget* parent() { return m_parent; }
 
     virtual void fire_update_event() final;
-    virtual void fire_click_event(int x, int y) final;
+    virtual bool fire_click_event(float x, float y) final;
 
     // accessors
     inline vec2& position() { return m_position; }
@@ -44,7 +52,7 @@ public:
 protected:
     virtual inline void on_update() {}
     // bool since it can stop propagation
-    virtual inline bool on_click(int x, int y)
+    virtual inline bool on_click(float x, float y)
     {
         std::cout << "Widget received click event!" << std::endl;
         return true;

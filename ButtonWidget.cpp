@@ -5,7 +5,7 @@ ButtonWidget::ButtonWidget(Widget* parent, const glm::vec2& pos, const glm::vec2
 {
 }
 
-bool ButtonWidget::on_click(int x, int y)
+bool ButtonWidget::on_click(float x, float y)
 {
     std::cout << "ButtonWidget::on_click : " << this << " : " << x << " " << y << " "
               << aabb_collision({ x, y }) << std::endl;

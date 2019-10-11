@@ -15,7 +15,7 @@ public:
 
     static WidgetRenderer* the();
 
-    void submit(class Widget* w, const sf::Color& color);
+    void submit(class Widget* w);
     void draw(sf::RenderWindow& window);
 
 private:

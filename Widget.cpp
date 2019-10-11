@@ -25,10 +25,10 @@ Widget::Widget(Widget* parent, const vec2& position, const vec2& size,
     m_varray[1] = sf::Vertex({ m_position.x + m_size.x, m_position.y }, color);
     m_varray[2] = sf::Vertex({ m_position.x + m_size.x, m_position.y + m_size.y }, color);
     m_varray[3] = sf::Vertex({ m_position.x, m_position.y + m_size.y }, color);
-    WidgetRenderer::the()->submit(this, color);
+    WidgetRenderer::the()->submit(this);
 }
 
-void Widget::fire_click_event(int x, int y)
+bool Widget::fire_click_event(float x, float y)
 {
     bool propagate = true;
     for (Widget* w : m_children)
@@ -36,7 +36,7 @@ void Widget::fire_click_event(int x, int y)
         // on_click is able to stop propagation of the event.
         if (w->aabb_collision({ x, y }))
         {
-            if (!w->on_click(x, y))
+            if (!w->fire_click_event(x, y))
             {
                 propagate = false;
                 break;
@@ -44,7 +44,8 @@ void Widget::fire_click_event(int x, int y)
         }
     }
     if (propagate && aabb_collision({ x, y }))
-        on_click(x, y);
+        return on_click(x, y);
+    return false;
 }
 
 bool Widget::operator<(const Widget& rhs) { return m_layer < rhs.m_layer; }

@@ -23,7 +23,7 @@ WidgetRenderer* WidgetRenderer::the()
     return m_instance; // FIXME: this is super janky
 }
 
-void WidgetRenderer::submit(Widget* w, const sf::Color& color)
+void WidgetRenderer::submit(Widget* w)
 {
     if (!w)
         return;
