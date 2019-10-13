@@ -4,14 +4,15 @@
 
 bool Widget::aabb_collision(const glm::vec2& point)
 {
-    return point.x > m_position.x && point.x < m_position.x + m_size.x &&
-           point.y > m_position.y && point.y < m_position.y + m_size.y;
+    auto position = m_constraints->absolute_position();
+    auto size = m_constraints->absolute_size();
+    return point.x > position.x && point.x < position.x + size.x &&
+           point.y > position.y && point.y < position.y + size.y;
 }
 
-Widget::Widget(Widget* parent, WidgetConstraints* constraints,
-               const sf::Color& color)
+Widget::Widget(Widget* parent, WidgetConstraints* constraints, const sf::Color& color)
     : m_parent(parent), m_constraints(constraints),
-      m_position(m_constraints->absolute_position()), m_size(m_constraints->absolute_size()), m_color(color)
+      m_varray(sf::VertexArray(sf::Quads, 4)), m_color(color)
 {
     if (parent)
     {
@@ -22,12 +23,8 @@ Widget::Widget(Widget* parent, WidgetConstraints* constraints,
     {
         m_layer = 0;
     }
-    m_varray = sf::VertexArray(sf::Quads, 4);
-    m_varray[0] = sf::Vertex({ m_position.x, m_position.y }, m_color);
-    m_varray[1] = sf::Vertex({ m_position.x + m_size.x, m_position.y }, m_color);
-    m_varray[2] = sf::Vertex({ m_position.x + m_size.x, m_position.y + m_size.y }, m_color);
-    m_varray[3] = sf::Vertex({ m_position.x, m_position.y + m_size.y }, m_color);
-    WidgetRenderer::the()->submit(this);
+    
+    fire_redraw_event();
 }
 
 
@@ -39,6 +36,17 @@ bool Widget::on_click(float, float)
 {
     std::cout << "Widget received click event!" << std::endl;
     return true;
+}
+
+void Widget::on_redraw() {}
+
+void Widget::on_child_register(Widget*)
+{
+}
+
+void Widget::fire_child_register_event(Widget* child)
+{
+    on_child_register(child);
 }
 
 bool Widget::operator<(const Widget& rhs) { return m_layer < rhs.m_layer; }
@@ -65,31 +73,43 @@ bool Widget::fire_click_event(float x, float y)
     return false;
 }
 
+void Widget::fire_redraw_event()
+{
+    auto position = m_constraints->absolute_position();
+    auto size = m_constraints->absolute_size();
+
+    m_varray[0] = sf::Vertex({ position.x, position.y }, m_color);
+    m_varray[1] = sf::Vertex({ position.x + size.x, position.y }, m_color);
+    m_varray[2] = sf::Vertex({ position.x + size.x, position.y + size.y }, m_color);
+    m_varray[3] = sf::Vertex({ position.x, position.y + size.y }, m_color);
+    WidgetRenderer::the()->submit(this);
+
+    for (Widget* w : m_children)
+    {
+        w->fire_redraw_event();
+    }
+    on_redraw();
+}
+
 void Widget::fire_update_event()
 {
     for (Widget* w : m_children)
     {
         w->on_update();
     }
+    on_update();
 }
 
 void Widget::fire_resize_event(float x, float y, float w, float h)
 {
     m_constraints->resize(x, y, w, h);
-    m_position = m_constraints->absolute_position();
-    m_size = m_constraints->absolute_size();
 
-    m_varray[0] = sf::Vertex({ m_position.x, m_position.y }, m_color);
-    m_varray[1] = sf::Vertex({ m_position.x + m_size.x, m_position.y }, m_color);
-    m_varray[2] = sf::Vertex({ m_position.x + m_size.x, m_position.y + m_size.y }, m_color);
-    m_varray[3] = sf::Vertex({ m_position.x, m_position.y + m_size.y }, m_color);
-    WidgetRenderer::the()->submit(this);
-    
     for (Widget* widget : m_children)
     {
         widget->fire_resize_event(x, y, w, h);
     }
     on_resize(w, h);
+    fire_redraw_event();
 }
 
 void Widget::register_child(Widget* c)
@@ -100,4 +120,7 @@ void Widget::register_child(Widget* c)
         // Sorting backwards to support proper propagation handling
         return first->layer() > second->layer();
     });
+
+    fire_child_register_event(c);
+    fire_redraw_event();
 }
